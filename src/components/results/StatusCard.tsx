@@ -45,6 +45,24 @@ export function StatusCard({ result, isBest }: StatusCardProps) {
         {r.dividendesNets > 0 && (
           <Row label="Dividendes nets" value={formatCurrency(r.dividendesNets)} />
         )}
+		{r.status === 'eurl' && (
+  <p className="text-xs text-amber-600 mt-1 flex items-start gap-1">
+    <span>ⓘ</span>
+    <span>
+      La part de dividendes excédant 10% du capital social
+      est soumise aux cotisations TNS dans la réalité — non
+      calculé ici.{' '}
+      
+        href="https://www.urssaf.fr"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline"
+      >
+        En savoir plus
+      </a>
+    </span>
+  </p>
+)}
         <div className="pt-2 border-t border-border">
           <Row
             label="Taux de charges effectif"
