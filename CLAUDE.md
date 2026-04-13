@@ -22,31 +22,34 @@ experts-comptables (CPL 30-80€/lead).
 - **Recharts** pour les graphiques (bar chart, stacked bar, multi-year lines)
 - **Framer Motion** pour les animations (fade-in + scale sur les résultats)
 - **jsPDF + html2canvas** pour l'export PDF
+- **Stripe** pour les paiements (checkout session + webhook)
 - **Turbopack** activé en développement
-- **100% client-side** — aucun backend, aucune donnée stockée, aucune API
+- **100% client-side** sauf les API Routes Stripe (server-side)
 - **Paramètres fiscaux 2025** centralisés dans `src/engine/constants.ts`
 - **Tests** : Vitest (62 tests passent — ne jamais casser ce chiffre)
 - **Déploiement** : Vercel, redéploiement automatique à chaque `git push main`
 
 ---
 
-## Toutes les routes disponibles (13 routes)
+## Toutes les routes disponibles (15 routes)
 
-| Route | Description | Statut |
+| Route | Type | Description |
 |---|---|---|
-| `/` | Landing page + widget mini-simulateur | ✅ |
-| `/simulateur` | Simulateur principal | ✅ |
-| `/blog` | Index des 3 articles SEO | ✅ |
-| `/blog/micro-vs-sasu` | Article + CTAs inline pré-remplis | ✅ |
-| `/blog/quitter-micro` | Article + CTAs inline pré-remplis | ✅ |
-| `/blog/seuil-tva` | Article + CTAs inline pré-remplis | ✅ |
-| `/diagnostic` | Quiz 10 questions → redirect simulateur params pré-remplis | ✅ |
-| `/experts` | Affiliation Dougs / Keobiz / Indy | ✅ |
-| `/premium` | Pré-commande Brevo + pricing 19€ + FAQ + garanties | ✅ |
-| `/remuneration` | Simulateur rémunération dirigeant | ✅ |
-| `/a-propos` | Mission, sources, disclaimer, équipe | ✅ |
-| `/comment-ca-marche` | 3 étapes, méthodologie, limites de l'outil | ✅ |
-| `/_not-found` | Page 404 custom | ✅ |
+| `/` | Page | Landing page + widget mini-simulateur |
+| `/simulateur` | Page | Simulateur principal — accepte query params |
+| `/blog` | Page | Index des 3 articles SEO |
+| `/blog/micro-vs-sasu` | Page | Article + 2 CTAs inline pré-remplis |
+| `/blog/quitter-micro` | Page | Article + 2 CTAs inline pré-remplis |
+| `/blog/seuil-tva` | Page | Article + 2 CTAs inline pré-remplis |
+| `/diagnostic` | Page | Quiz 10 questions → redirect simulateur |
+| `/experts` | Page | Affiliation Dougs / Keobiz / Indy |
+| `/premium` | Page | Checkout Stripe ou pré-commande Brevo |
+| `/remuneration` | Page | Simulateur rémunération dirigeant |
+| `/a-propos` | Page | Mission, sources, disclaimer |
+| `/comment-ca-marche` | Page | Méthodologie, 3 étapes, limites |
+| `/_not-found` | Page | 404 custom |
+| `/api/create-checkout-session` | API Route | POST — crée session Stripe Checkout |
+| `/api/stripe-webhook` | API Route | POST — reçoit events Stripe signés |
 
 ---
 
@@ -55,259 +58,182 @@ experts-comptables (CPL 30-80€/lead).
 ```
 src/
 ├── app/
-│   ├── layout.tsx                    # Layout racine — Inter, Header/Footer,
-│   │                                 # Plausible analytics, meta SEO
-│   ├── page.tsx                      # Landing page — hero + widget mini-sim
-│   │                                 # + features + aperçu 3 statuts
-│   ├── globals.css                   # Variables CSS custom, dark mode vars,
-│   │                                 # .pdf-export-mode, .pdf-hide
-│   ├── simulateur/page.tsx           # Simulateur principal — accepte query params
-│   │                                 # ca, act, pt, ch, ac, vl, rs
+│   ├── layout.tsx
+│   ├── page.tsx                          # Landing + MiniSimulator widget
+│   ├── globals.css
+│   ├── simulateur/page.tsx               # Simulateur principal
 │   ├── blog/
-│   │   ├── page.tsx                  # Index blog
-│   │   ├── micro-vs-sasu/page.tsx    # Article + 2 CTAs inline pré-remplis
-│   │   ├── quitter-micro/page.tsx    # Article + 2 CTAs inline pré-remplis
-│   │   └── seuil-tva/page.tsx        # Article + 2 CTAs inline pré-remplis
-│   ├── diagnostic/page.tsx           # Quiz 10 questions + scoring
-│   │                                 # Redirect vers /simulateur?ca=X&act=Y
-│   │                                 # avec params déduits des réponses
-│   ├── experts/page.tsx              # Affiliation 3 partenaires
-│   ├── premium/page.tsx              # Formulaire pré-commande Brevo
-│   │                                 # Pricing 19€, FAQ 3 questions, garanties
-│   │                                 # Prêt pour Stripe (placeholder payment)
-│   ├── remuneration/page.tsx         # Simulateur dédié dirigeant
-│   ├── a-propos/page.tsx             # Mission, sources fiscales, disclaimer,
-│   │                                 # limites de l'outil, contact
-│   ├── comment-ca-marche/page.tsx    # 3 étapes d'utilisation, méthodologie
-│   │                                 # de calcul, limites connues
-│   └── not-found.tsx                 # Page 404 custom avec liens utiles
+│   │   ├── page.tsx
+│   │   ├── micro-vs-sasu/page.tsx        # CTAs inline : ?ca=45000 et ?ca=70000
+│   │   ├── quitter-micro/page.tsx        # CTAs inline : ?ca=60000 et ?ca=80000
+│   │   └── seuil-tva/page.tsx            # CTAs inline : ?ca=38000 et ?ca=55000
+│   ├── diagnostic/page.tsx               # Quiz → redirect /simulateur?params
+│   ├── experts/page.tsx
+│   ├── premium/page.tsx                  # Détecte ?session_id → confirmation
+│   │                                     # Si STRIPE configuré → Checkout
+│   │                                     # Sinon → pré-commande Brevo (fallback)
+│   ├── remuneration/page.tsx
+│   ├── a-propos/page.tsx
+│   ├── comment-ca-marche/page.tsx
+│   ├── not-found.tsx
+│   └── api/
+│       ├── create-checkout-session/
+│       │   └── route.ts                  # POST { email } → { url }
+│       │                                 # Mode dégradé si env vars absentes (503)
+│       └── stripe-webhook/
+│           └── route.ts                  # POST — vérifie signature Stripe
+│                                         # checkout.session.completed :
+│                                         #   → email confirmation Brevo SMTP
+│                                         #   → contact Brevo tagué PREMIUM_PAID
+│                                         # Retourne toujours 200 à Stripe
 │
-├── engine/                           # Moteur de calcul — fonctions pures TS
-│   ├── types.ts                      # SimulationInputs, StatusResult,
-│   │                                 # SimulationResults, OptimalSplit
-│   ├── constants.ts                  # TOUS les paramètres fiscaux 2025
-│   ├── ir.ts                         # Barème IR progressif, QF, décote
-│   ├── micro.ts                      # Micro : cotisations, abattement, ACRE
-│   ├── eurl.ts                       # EURL IS : TNS itératif, IS, dividendes,
-│   │                                 # cotisations TNS sur div > 10% capital,
-│   │                                 # option barème IR dividendes
-│   ├── sasu.ts                       # SASU IS : salaire, IS, dividendes,
-│   │                                 # option barème IR dividendes
-│   ├── social-coverage.ts            # Données protection sociale qualitatives
-│   ├── optimizer.ts                  # Split rémunération/dividendes optimal
-│   └── index.ts                      # computeAll(inputs) => SimulationResults
+├── engine/                               # Moteur calcul — fonctions pures TS
+│   ├── types.ts
+│   ├── constants.ts                      # TOUS les paramètres fiscaux 2025
+│   ├── ir.ts
+│   ├── micro.ts
+│   ├── eurl.ts                           # TNS itératif, div > 10% capital,
+│   │                                     # option barème IR dividendes
+│   ├── sasu.ts                           # Option barème IR dividendes
+│   ├── social-coverage.ts
+│   ├── optimizer.ts
+│   └── index.ts                          # computeAll() + optimiseur
 │
 ├── components/
 │   ├── layout/
-│   │   ├── Header.tsx                # Sticky, nav complète (blog, diagnostic,
-│   │   │                             # experts, premium, a-propos),
-│   │   │                             # mobile hamburger, toggle dark mode
-│   │   └── Footer.tsx                # Liens : a-propos, comment-ca-marche,
-│   │                                 # experts, premium, blog
+│   │   ├── Header.tsx                    # Nav complète, dark mode toggle
+│   │   └── Footer.tsx                    # Liens a-propos, comment-ca-marche
 │   ├── simulator/
-│   │   └── SimulatorForm.tsx         # CA, activité, parts, charges, ACRE, VL,
-│   │                                 # capital social EURL, toggle PFU/barème IR
+│   │   └── SimulatorForm.tsx
 │   ├── results/
-│   │   ├── ResultsDashboard.tsx      # Orchestre tous les panneaux résultats
-│   │   │                             # id="results-content" sur div principal
-│   │   │                             # Score contextualisé sous le banner
-│   │   │                             # Animations framer-motion
-│   │   │                             # Boutons PDF + partage URL
-│   │   │                             # CTA affiliation experts-comptables
-│   │   ├── ScoreSummary.tsx          # Phrase de synthèse contextualisée
-│   │   │                             # Ex: "La micro reste optimale jusqu'à
-│   │   │                             # ~X€. Vous économisez Y€/an vs SASU."
-│   │   ├── ComparisonTable.tsx       # Grille 3 colonnes
-│   │   ├── StatusCard.tsx            # Carte statut + accordéon détail
-│   │   │                             # Note EURL div > 10% capital
-│   │   ├── OptimiserPanel.tsx        # Split optimal (si gain > 300€)
-│   │   │                             # Slider interactif recalcul temps réel
-│   │   ├── ComparisonChart.tsx       # Bar chart revenu net comparé
-│   │   ├── WaterfallChart.tsx        # Stacked bar décomposition CA → net
-│   │   ├── MultiYearChart.tsx        # Graphique 5 ans Micro/EURL/SASU
-│   │   └── SocialCoverageTable.tsx   # Tableau protection sociale 7 critères
+│   │   ├── ResultsDashboard.tsx          # id="results-content", animations,
+│   │   │                                 # PDF export, URL share, affiliation CTA
+│   │   ├── ScoreSummary.tsx              # Phrase de synthèse contextualisée
+│   │   ├── ComparisonTable.tsx
+│   │   ├── StatusCard.tsx                # Note EURL div > 10% capital
+│   │   ├── OptimiserPanel.tsx            # Slider interactif recalcul temps réel
+│   │   ├── ComparisonChart.tsx
+│   │   ├── WaterfallChart.tsx
+│   │   ├── MultiYearChart.tsx            # Projection 5 ans
+│   │   └── SocialCoverageTable.tsx
 │   ├── landing/
-│   │   └── MiniSimulator.tsx         # Widget "Estimation rapide" sur la home
-│   │                                 # 2 inputs (CA + type activité)
-│   │                                 # → 3 chiffres nets estimés
-│   │                                 # → lien pré-rempli vers simulateur complet
+│   │   └── MiniSimulator.tsx             # 2 inputs → 3 nets → lien pré-rempli
 │   ├── newsletter/
-│   │   └── NewsletterCTA.tsx         # Opt-in email → Brevo (La Marge)
-│   │                                 # Classe pdf-hide
-│   └── ui/                           # NumberInput, Slider, Tooltip
+│   │   └── NewsletterCTA.tsx             # Brevo, classe pdf-hide
+│   └── ui/                              # NumberInput, Slider, Tooltip
 │
 ├── hooks/
-│   └── useSimulator.ts               # State inputs + results + runSimulation()
-│                                     # Sync URL params (replaceState)
-│                                     # Chargement params au montage
+│   └── useSimulator.ts                   # State + sync URL params
 │
 └── lib/
-    ├── formatters.ts                 # formatCurrency(), formatPercent() fr-FR
-    ├── validators.ts                 # Schema Zod formulaire
-    ├── url-params.ts                 # encode/decodeSimulationToURL()
-    │                                 # Clés : ca, act, pt, ch, ac, vl, rs
-    ├── export-pdf.ts                 # exportResultsToPDF() jsPDF+html2canvas
-    ├── brevo.ts                      # addContactToBrevo() API Brevo
-    ├── analytics.ts                  # trackEvent() wrapper Plausible
-    └── score-summary.ts              # generateScoreSummary(results) → string
-                                      # Génère la phrase de synthèse contextualisée
+    ├── formatters.ts
+    ├── validators.ts
+    ├── url-params.ts                     # Clés : ca, act, pt, ch, ac, vl, rs
+    ├── export-pdf.ts                     # jsPDF + html2canvas
+    ├── brevo.ts                          # addContactToBrevo() contacts API
+    ├── analytics.ts                      # trackEvent() Plausible
+    └── score-summary.ts                  # generateScoreSummary(results) → string
 ```
 
 ---
 
-## Fonctionnalités clés et leur logique
+## Logique de paiement Stripe (critique)
 
-### Widget mini-simulateur (landing page)
-`MiniSimulator.tsx` sur `/` :
-- 2 inputs uniquement : CA (slider) + type activité (select)
-- Calcul partiel temps réel des 3 revenus nets estimés
-- Bouton "Voir l'analyse complète" → `/simulateur?ca=X&act=Y`
-- Pas de frais pro, pas de situation fiscale (defaults utilisés)
-- Objectif : démontrer la valeur en 30 secondes, convertir vers le simulateur
+### Flux de paiement complet
 
-### Diagnostic → Simulateur
-`/diagnostic` → redirect vers `/simulateur` avec params déduits :
-- Les réponses du quiz déterminent le CA estimé, le type d'activité
-  et les charges estimées
-- Exemple de redirect : `/simulateur?ca=120000&act=bnc&ch=15000&rs=60`
-- Le simulateur se lance automatiquement avec ces valeurs au montage
-- `trackEvent('diagnostic_complete', { score, statut_recommande })`
+```
+Utilisateur clique "Acheter" sur /premium
+        ↓
+POST /api/create-checkout-session { email }
+        ↓
+Stripe crée une Checkout Session (mode payment, price_id)
+        ↓
+Retour { url } → redirect vers Stripe Checkout
+        ↓
+Utilisateur paie sur Stripe
+        ↓
+Stripe appelle /api/stripe-webhook (event: checkout.session.completed)
+        ↓
+Webhook vérifie la signature (STRIPE_WEBHOOK_SECRET)
+        ↓
+Webhook envoie email confirmation via Brevo SMTP /v3/smtp/email
+Webhook tague le contact Brevo : PREMIUM_PAID=true + date
+        ↓
+Stripe redirige vers /premium?session_id=cs_...
+        ↓
+Page /premium détecte ?session_id → affiche confirmation
+"Paiement confirmé ! Votre rapport arrive par email sous 24h."
+```
 
-### Score contextualisé
-`ScoreSummary.tsx` + `lib/score-summary.ts` :
-Affiche une phrase générée dynamiquement sous le banner de résultats.
-Exemples de phrases selon les cas :
-- "La micro reste le meilleur choix jusqu'à ~X€ de CA. Vous économisez
-  X€/an par rapport à la SASU."
-- "Passer en EURL vous permettrait de gagner X€/an supplémentaires
-  pour le même CA."
-- "Votre CA dépasse le plafond micro (77 700€). L'EURL ou la SASU
-  sont vos seules options."
-La logique est dans `generateScoreSummary(results: SimulationResults)`.
+### Mode dégradé (env vars Stripe absentes)
+Si `STRIPE_SECRET_KEY` ou `STRIPE_PRICE_ID` absent :
+- `/api/create-checkout-session` retourne 503
+- `/premium` détecte l'erreur et bascule en mode pré-commande Brevo
+- L'utilisateur peut pré-commander sans payer (fallback)
 
-### CTAs blog inline
-Chaque article contient 2 liens contextuels avec params pré-remplis :
-- `micro-vs-sasu` : liens à 45 000€ et 70 000€ BNC
-- `quitter-micro` : liens à 60 000€ et 80 000€ BNC
-- `seuil-tva` : liens à 38 000€ et 55 000€ BNC
-
-### Page /premium
-Actuellement : formulaire de pré-commande connecté à Brevo
-(tag `premium_precommande` dans les attributs contact).
-Pricing affiché : 19€.
-FAQ 3 questions, section garanties.
-**Stripe non encore intégré** — paiement réel à implémenter.
-
----
-
-## Comment fonctionne le moteur de calcul
-
-Flux : `SimulatorForm` → `useSimulator` → `computeAll(inputs)`
-→ `ResultsDashboard` + `ScoreSummary` → composants enfants.
-
-`computeAll()` est une fonction pure synchrone < 1ms.
-Appelle aussi `optimizer.ts` pour `optimalEURL` et `optimalSASU`.
-
-### Points techniques importants
-
-- **TNS (EURL)** : calcul itératif 2 passes (CSG/CRDS circulaire).
-- **Dividendes EURL > 10% capital** : cotisations TNS ~45% sur la part
-  excédant 10% du capital social saisi.
-- **Option barème IR dividendes** : abattement 40% puis barème progressif.
-- **Optimizer** : brute force 5% puis affinage 1%.
-- **URL params** : clés courtes (ca, act, pt, ch, ac, vl, rs).
-  `history.replaceState` uniquement (pas pushState).
-  Chargement au montage via `decodeSimulationFromURL`.
-  Calcul automatique déclenché si params présents.
-- **PDF export** : html2canvas scale 2 + jsPDF A4 portrait.
-  `.pdf-export-mode` sur body + `.pdf-hide` sur boutons/CTAs.
-- **Dark mode** : classe `dark` sur `<html>`, persistence localStorage.
-- **Animations** : framer-motion `AnimatePresence` + `motion.div`.
-- **Score summary** : généré côté client, jamais côté serveur.
-
----
-
-## Paramètres fiscaux 2025
-
-Tous dans `src/engine/constants.ts`. Ne jamais hardcoder ailleurs.
-
-| Paramètre | Valeur |
-|---|---|
-| Cotisations micro BNC | 23,1% |
-| Cotisations micro BIC services | 21,2% |
-| Cotisations micro BIC vente | 12,3% |
-| Abattement IR BNC | 34% |
-| Abattement IR BIC services | 50% |
-| Abattement IR BIC vente | 71% |
-| Plafond micro services | 77 700€ |
-| Plafond micro vente | 188 700€ |
-| Seuil franchise TVA services | 37 500€ |
-| Seuil majoré TVA services | 41 250€ |
-| IS taux réduit | 15% ≤ 42 500€ |
-| IS taux normal | 25% |
-| PFU dividendes | 30% |
-| Abattement dividendes barème IR | 40% |
-| Cotisations TNS div EURL excédent | ~45% |
-| PASS 2025 | 46 368€ |
-
-Barème IR 2025 :
-0% → 11 497€ · 11% → 29 315€ · 30% → 83 823€
-41% → 180 294€ · 45% au-delà
+### Points importants pour le webhook
+- **Toujours retourner 200 à Stripe** même en cas d'erreur interne
+  (sinon Stripe retente indéfiniment)
+- **Vérifier la signature** avec `stripe.webhooks.constructEvent()`
+  avant tout traitement
+- **Idempotence** : vérifier que `session.id` n'a pas déjà été traité
+  (éviter les doubles envois d'email si Stripe retente)
 
 ---
 
 ## Variables d'environnement
 
 ### .env.local (ne jamais committer)
-```
+```bash
+# Brevo
 NEXT_PUBLIC_BREVO_API_KEY=xkeysib-...
 NEXT_PUBLIC_BREVO_LIST_ID=7
+
+# Stripe (côté serveur uniquement sauf PUBLISHABLE_KEY)
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 ```
 
-### À ajouter pour activer Stripe sur /premium
-```
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_PRICE_ID=price_...
-```
-Nécessite : `src/app/api/create-checkout-session/route.ts`
-+ webhook Stripe pour confirmer paiement + livraison PDF.
+### Sur Vercel (Settings → Environment Variables)
+Toutes les variables ci-dessus, en Production + Preview + Development.
+
+### Configuration Stripe requise
+Dans le dashboard Stripe → Webhooks → Ajouter un endpoint :
+- URL : `https://statut-net.vercel.app/api/stripe-webhook`
+- Événements à écouter : `checkout.session.completed` uniquement
+- Copier le `Signing secret` → `STRIPE_WEBHOOK_SECRET`
 
 ---
 
 ## Newsletter — La Marge
 
-**Nom** : La Marge (marge bénéficiaire + marge de liberté)
-**Provider** : Brevo (plan gratuit 300 contacts/jour)
-**List ID** : `NEXT_PUBLIC_BREVO_LIST_ID`
+**Nom** : La Marge
+**Provider** : Brevo
 
 Tags Brevo utilisés :
-- `source: "statutnet-simulateur"` — inscription via CTA simulateur
-- `source: "diagnostic"` — inscription via diagnostic
-- `premium_precommande` — pré-commande page /premium
-
-Comportements `NewsletterCTA.tsx` :
-- idle → loading → success | error
-- Doublon (400 Brevo) : succès silencieux
-- Env vars absentes : console.warn + succès simulé
+- `SOURCE: "statutnet-simulateur"` — CTA simulateur
+- `SOURCE: "diagnostic"` — fin du quiz diagnostic
+- `SOURCE: "premium_precommande"` — fallback /premium sans Stripe
+- `PREMIUM_PAID: true` + date — confirmé par webhook Stripe
 
 ---
 
 ## Analytics Plausible
 
-Domaine : `statut-net.vercel.app`
-Script dans `layout.tsx` (ignoré en localhost).
-
-| Événement | Déclencheur | Props |
-|---|---|---|
-| `simulation_lancee` | Calcul réussi | type_activite, tranche_ca, meilleur_statut |
-| `lien_partage` | Clic "Copier le lien" | — |
-| `pdf_telecharge` | PDF généré | — |
-| `newsletter_inscription` | Inscription Brevo OK | source |
-| `diagnostic_complete` | Fin quiz | score, statut_recommande |
-| `expert_clic` | Clic CTA expert | partenaire |
-| `premium_clic` | Clic /premium | — |
-| `mini_simulator_clic` | CTA widget landing | ca_range, act |
+| Événement | Déclencheur |
+|---|---|
+| `simulation_lancee` | Calcul réussi (props: type_activite, tranche_ca, meilleur_statut) |
+| `lien_partage` | Clic "Copier le lien" |
+| `pdf_telecharge` | PDF généré |
+| `newsletter_inscription` | Inscription Brevo OK |
+| `diagnostic_complete` | Fin quiz (props: score, statut_recommande) |
+| `expert_clic` | Clic CTA expert (props: partenaire) |
+| `premium_clic` | Clic /premium |
+| `premium_paiement_initie` | POST create-checkout-session OK |
+| `premium_paiement_confirme` | ?session_id détecté sur /premium |
+| `mini_simulator_clic` | CTA widget landing (props: ca_range, act) |
 
 ---
 
@@ -315,10 +241,10 @@ Script dans `layout.tsx` (ignoré en localhost).
 
 ```bash
 npm run dev          # Dev localhost:3000 (Turbopack)
-npm run build        # Build production — doit passer sans erreur TypeScript
+npm run build        # Build production
 npm run start        # Serveur production local
-npx vitest run       # Tests — doit afficher 62 passed
-npx vitest --watch   # Tests en watch
+npx vitest run       # 62 tests doivent passer
+npx vitest --watch   # Watch mode
 
 git add .
 git commit -m "type: description"
@@ -329,128 +255,137 @@ git push             # Déclenche redéploiement Vercel
 
 ## Ce qui est en place et fonctionne
 
-### Moteur et simulateur
+### Simulateur
 - [x] Calcul complet micro / EURL / SASU
 - [x] Barème IR 2025 avec QF, plafonnement, décote
 - [x] Option barème IR dividendes (toggle PFU/progressif)
 - [x] Dividendes EURL > 10% capital social
 - [x] Optimiseur split rémunération/dividendes dans l'UI
-- [x] Score contextualisé (phrase de synthèse dynamique)
-- [x] Export PDF (header/footer, pagination, éléments exclus)
+- [x] Score contextualisé (phrase synthèse dynamique)
+- [x] Export PDF (header/footer, pagination, pdf-hide)
 - [x] Partage par URL (query params, sync replaceState)
-- [x] Chargement automatique depuis URL (diagnostic redirect)
 - [x] Graphique comparaison 5 ans (MultiYearChart)
 - [x] Animations framer-motion
 
-### Acquisition et contenu
+### Acquisition
 - [x] Widget mini-simulateur sur la landing page
-- [x] Blog SEO : index + 3 articles avec CTAs inline pré-remplis
+- [x] Blog SEO : 3 articles avec CTAs inline pré-remplis
 - [x] Diagnostic → redirect simulateur avec params déduits
-- [x] Pages /a-propos et /comment-ca-marche dans le footer
 
 ### Monétisation
-- [x] Page /premium : pré-commande Brevo + pricing + FAQ + garanties
+- [x] Stripe Checkout Session (API Route POST)
+- [x] Webhook Stripe (signature, email Brevo, tag contact)
+- [x] Page /premium : mode Stripe + mode fallback Brevo
+- [x] Confirmation paiement via ?session_id
 - [x] Page /experts : affiliation Dougs / Keobiz / Indy
-- [x] CTA affiliation dans ResultsDashboard
 
 ### Infrastructure
-- [x] Newsletter Brevo connectée (La Marge)
-- [x] Analytics Plausible (8 événements trackés)
-- [x] Mode sombre (toggle Header, persistence localStorage)
-- [x] Responsive mobile-first 375px → 1440px
-- [x] SEO : meta, Open Graph, 13 routes
+- [x] Newsletter Brevo (La Marge)
+- [x] Analytics Plausible (10 événements)
+- [x] Mode sombre (toggle, persistence localStorage)
+- [x] Pages /a-propos et /comment-ca-marche
+- [x] Responsive 375px → 1440px
+- [x] SEO : meta, Open Graph, 15 routes
 - [x] 62 tests passent
-- [x] Build production sans erreur TypeScript
-- [x] Déployé : statut-net.vercel.app
+- [x] Build production propre
 
 ---
 
-## Prochaines étapes — par priorité business
+## Prochaines étapes — par priorité
 
-### Priorité 1 — Activer les revenus (bloquant)
-1. **Stripe sur /premium** : API Route `create-checkout-session`,
-   webhook confirmation paiement, envoi PDF par email Brevo
-   transactionnel ou lien de téléchargement signé (48h d'expiration)
-2. **Contacter Dougs/Keobiz/Indy** pour vrais liens d'affiliation CPL
-   (remplacer les liens placeholder sur /experts)
+### Priorité 1 — Activer les revenus réels (cette semaine)
+1. **Créer le produit Stripe** : dashboard Stripe → Products → créer
+   "Rapport StatutNet Premium" à 19€ → copier le Price ID
+2. **Configurer toutes les env vars Stripe** sur Vercel
+3. **Configurer le webhook** dans le dashboard Stripe
+4. **Tester un vrai paiement** en mode test (sk_test_, pk_test_)
+   puis basculer en live
+5. **Créer le PDF du rapport** : le contenu à livrer par email
+   après paiement (actuellement l'email promet le rapport sous 24h
+   mais le PDF doit être créé et hébergé ou attaché)
 
-### Priorité 2 — Activer l'acquisition (urgent)
-3. **Publier 5 posts LinkedIn** (contenu rédigé, prêt à copier)
-4. **Envoyer édition 1 de La Marge** dès 50 abonnés
-5. **Séquence email bienvenue** : configurer J+0, J+3, J+7 dans Brevo
+### Priorité 2 — Acquisition (cette semaine)
+6. **Publier le premier post LinkedIn** (contenu prêt)
+7. **Configurer la séquence email Brevo** : J+0, J+3, J+7
+8. **Envoyer l'édition 1 de La Marge** dès 50 abonnés
 
-### Priorité 3 — SEO (moyen terme)
-6. **sitemap.xml** : `src/app/sitemap.ts` (Next.js App Router)
-7. **robots.txt** : `src/app/robots.ts`
-8. **JSON-LD** : schema Article sur les 3 articles de blog
-9. **4 articles supplémentaires** : TJM freelance, charges SASU,
-   cotisations TNS barème, EURL vs portage salarial
+### Priorité 3 — SEO (mois 1)
+9. **sitemap.xml** : `src/app/sitemap.ts`
+10. **robots.txt** : `src/app/robots.ts`
+11. **JSON-LD Article** sur les 3 articles de blog
+12. **4 articles supplémentaires** à fort volume de recherche
 
-### Priorité 4 — Amélioration produit (après traction)
-10. **Slider taux croissance CA** dans MultiYearChart
-    (actuellement taux fixe codé en dur)
-11. **Taxe PUMa** : calcul et avertissement si salaire SASU < seuil
-12. **Cotisations TNS barème exact** : 6 tranches post-réforme 2025
-13. **Tests E2E Playwright** : parcours complet simulateur → PDF → newsletter
+### Priorité 4 — Produit (après traction confirmée)
+13. **Idempotence webhook** : stocker les session_id traités
+    pour éviter doubles envois si Stripe retente
+14. **Livraison PDF automatique** : générer et attacher le PDF
+    à l'email de confirmation (jsPDF côté serveur)
+15. **Vrais liens CPL** Dougs/Keobiz/Indy (contacter les partenaires)
+16. **Slider taux croissance** dans MultiYearChart
+17. **Taxe PUMa** : calcul et avertissement
 
 ---
 
 ## Conventions de code
 
+- **API Routes** : `src/app/api/*/route.ts`, export `POST` uniquement
+- **Stripe** : toujours vérifier la signature webhook avant traitement
+- **Brevo SMTP** : endpoint `/v3/smtp/email` pour les emails transactionnels
+  (différent de `/v3/contacts` pour la gestion des contacts)
 - **Tailwind v4** : `@theme inline` dans `globals.css`
-- **Dark mode** : classe `dark` sur `<html>`, pas sur `<body>`
-- **Composants** : `'use client'` uniquement si hooks ou events
+- **Dark mode** : classe `dark` sur `<html>`
 - **Engine** : fonctions pures TS, zéro import React
 - **Constantes fiscales** : UNIQUEMENT dans `constants.ts`
 - **Formatage** : `Intl.NumberFormat('fr-FR')` via `formatters.ts`
 - **Analytics** : `trackEvent()` de `lib/analytics.ts` uniquement
-- **Score summary** : `generateScoreSummary()` de `lib/score-summary.ts`
-- **TypeScript** : `any` interdit — `unknown` + type guards
+- **TypeScript** : `any` interdit
 - **Commentaires** : en français uniquement
-- **pdf-hide** : sur tout élément à exclure du PDF export
+- **pdf-hide** : sur tout élément à exclure du PDF
 
 ---
 
-## Limites connues (afficher dans /a-propos, /comment-ca-marche, PDF)
+## Limites connues
 
 - Cotisations TNS EURL : modèle simplifié ±3%
 - Charges SASU : taux moyens ±2%
-- Dividendes EURL > 10% capital : calcul approché des cotisations TNS
+- Dividendes EURL > 10% capital : calcul approché
 - Versement libératoire : condition revenu fiscal non vérifiée
 - ACRE : réduction 50% forfaitaire, conditions non vérifiées
 - Taxe PUMa : non calculée
 - CFE, CVAE, taxe sur les salaires : non prises en compte
 - Professions libérales réglementées (CIPAV) : non gérées
 - Holding et montages complexes : non gérés
+- Idempotence webhook Stripe : à implémenter (risque doublon email)
 
 ---
 
 ## Débogage fréquent
 
+**Stripe webhook retourne 400 :**
+→ La signature est invalide. Vérifier que `STRIPE_WEBHOOK_SECRET`
+  correspond bien au secret du webhook configuré dans le dashboard Stripe.
+→ En local, utiliser Stripe CLI : `stripe listen --forward-to localhost:3000/api/stripe-webhook`
+
+**Email de confirmation non reçu après paiement :**
+→ Vérifier les logs du webhook dans le dashboard Stripe (Events).
+→ Vérifier que Brevo SMTP est bien configuré (sender vérifié).
+→ Vérifier que `NEXT_PUBLIC_BREVO_API_KEY` a la permission "SMTP".
+
+**Page /premium reste en mode pré-commande malgré Stripe configuré :**
+→ Vérifier que `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` est bien défini.
+→ La page détecte l'absence de cette variable pour basculer en fallback.
+
+**?session_id ne déclenche pas la confirmation :**
+→ Vérifier que Stripe Checkout est configuré avec
+  `success_url: /premium?session_id={CHECKOUT_SESSION_ID}`
+
 **62 tests ne passent pas :**
-Lire le message Vitest exact. Ne jamais modifier un test
-pour le faire passer — corriger le code.
+→ Les API Routes Stripe ne sont pas testées (mock difficile).
+→ Les 62 tests couvrent uniquement le moteur de calcul et lib/*.
+→ Ne jamais modifier un test pour le faire passer.
 
 **Build Vercel échoue :**
-`npm run build` en local d'abord. Les erreurs TypeScript
-sont la cause #1. Turbopack masque parfois des erreurs
-que le build production révèle.
-
-**Redirect diagnostic → simulateur ne se déclenche pas :**
-Vérifier que `router.push('/simulateur?' + params)` est
-bien appelé après le dernier `trackEvent`. Vérifier que
-`useSimulator` lit bien les params au montage (useEffect []).
-
-**Score contextualisé affiche une phrase générique :**
-Vérifier `generateScoreSummary()` dans `lib/score-summary.ts`.
-La fonction reçoit `SimulationResults` complet — vérifier
-que `bestStatus` et `gainVsDefault` sont bien renseignés.
-
-**Widget mini-simulateur ne redirige pas :**
-Vérifier que `encodeSimulationToURL` reçoit bien les valeurs
-du mini-formulaire (CA + type activité avec defaults pour le reste).
-
-**Brevo ne reçoit pas les pré-commandes /premium :**
-Vérifier que le tag `premium_precommande` est bien passé
-dans les `attributes` de l'appel API Brevo.
-Vérifier les env vars Vercel.
+→ `npm run build` en local d'abord.
+→ Vérifier que toutes les variables `STRIPE_*` sont dans Vercel
+  (le build échoue si une variable server-side est manquante
+  et référencée dans le code).
