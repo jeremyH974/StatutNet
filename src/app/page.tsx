@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { MiniSimulator } from '@/components/simulator/MiniSimulator';
 
 const FEATURES = [
   {
@@ -99,6 +100,13 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Mini simulator widget */}
+      <section className="py-12">
+        <div className="max-w-md mx-auto px-4">
+          <MiniSimulator />
         </div>
       </section>
 

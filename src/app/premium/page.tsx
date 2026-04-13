@@ -1,160 +1,215 @@
 'use client';
 
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { addContactToBrevo } from '@/lib/brevo';
 
 const FEATURES = [
-  'Comparaison détaillée des 3 statuts',
-  'Simulation sur 5 ans',
-  'Recommandation personnalisée',
-  "Conseils d'optimisation fiscale",
-  'Livré en PDF par email',
+  'Comparaison détaillée des 3 statuts personnalisée à votre situation',
+  'Simulation sur 5 ans avec projection de croissance',
+  'Recommandation argumentée du statut optimal',
+  'Conseils d\'optimisation fiscale (split rémunération/dividendes)',
+  'Analyse de la protection sociale et des risques',
+  'Livré en PDF par email sous 24h',
 ];
 
-const TRUST = [
+const FAQ = [
   {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <path d="M10 2l2.5 5.5L18 8.5l-4 4 1 5.5L10 15.5 4.5 18l1-5.5-4-4 5.5-1z" />
-      </svg>
-    ),
-    text: 'Satisfait ou remboursé sous 30 jours',
+    q: 'En quoi le rapport est-il différent du simulateur gratuit ?',
+    a: 'Le simulateur donne une estimation instantanée. Le rapport premium inclut une projection sur 5 ans, des scénarios de croissance personnalisés, et des recommandations contextualisées que l\'algorithme seul ne peut pas fournir.',
   },
   {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <rect x="3" y="8" width="14" height="9" rx="2" />
-        <path d="M7 8V5a3 3 0 016 0v3" />
-      </svg>
-    ),
-    text: 'Données confidentielles et sécurisées',
+    q: 'Qui rédige le rapport ?',
+    a: 'Le rapport est généré automatiquement à partir de vos données, puis vérifié par notre équipe. Il ne remplace pas un avis d\'expert-comptable mais constitue une base solide pour votre réflexion.',
+  },
+  {
+    q: 'Puis-je être remboursé ?',
+    a: 'Oui, satisfait ou remboursé sous 30 jours, sans condition. Envoyez un simple email.',
   },
 ];
 
-export default function PremiumPage() {
-  const stripeKey = typeof window !== 'undefined'
-    ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-    : undefined;
+export default function PremiumPageWrapper() {
+  return (
+    <Suspense fallback={<div className="max-w-4xl mx-auto px-4 py-16 text-center text-muted">Chargement...</div>}>
+      <PremiumPage />
+    </Suspense>
+  );
+}
 
-  function handleOrder() {
-    alert(
-      'Stripe sera connecté prochainement. Contactez-nous pour un rapport personnalisé.'
-    );
-  }
+function PremiumPage() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const searchParams = useSearchParams();
+
+  const hasStripe = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+  // Détecter le retour de Stripe Checkout
+  useEffect(() => {
+    if (searchParams.get('session_id')) {
+      setStatus('success');
+    }
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.includes('@')) return;
+
+    setStatus('loading');
+
+    if (hasStripe) {
+      // Appeler l'API Route pour créer une session Stripe Checkout
+      try {
+        const res = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+        setStatus('error');
+      } catch {
+        setStatus('error');
+      }
+      return;
+    }
+
+    // Mode pré-commande (Stripe non configuré) : enregistrer l'email via Brevo
+    const result = await addContactToBrevo(email);
+    setStatus(result.success ? 'success' : 'error');
+  };
 
   return (
-    <section className="py-16 sm:py-24">
-      <div className="max-w-2xl mx-auto px-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground text-center">
+    <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="text-center">
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
           Rapport fiscal personnalisé
         </h1>
-        <p className="mt-4 text-lg text-muted text-center max-w-xl mx-auto">
-          Recevez une analyse détaillée de votre situation avec des
-          recommandations concrètes pour optimiser votre fiscalité.
+        <p className="mt-3 text-lg text-muted max-w-xl mx-auto">
+          Recevez une analyse détaillée de votre situation avec des recommandations concrètes.
         </p>
+      </div>
 
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Pricing card */}
-        <div className="mt-12 rounded-2xl border border-border bg-surface p-8 sm:p-10">
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted uppercase tracking-wide">
-              Paiement unique
-            </p>
-            <p className="mt-2 flex items-baseline justify-center gap-1">
-              <span className="text-5xl font-extrabold text-foreground">19€</span>
-            </p>
-            <p className="mt-1 text-sm text-muted">
-              Sans abonnement, sans engagement
-            </p>
+        <div className="bg-surface border border-primary/20 rounded-2xl p-8 ring-2 ring-primary/10">
+          <div className="flex items-baseline gap-1">
+            <span className="text-4xl font-bold text-foreground">19 €</span>
+            <span className="text-muted">paiement unique</span>
           </div>
 
-          <ul className="mt-8 space-y-3">
-            {FEATURES.map((feature) => (
-              <li
-                key={feature}
-                className="flex items-start gap-3 text-sm text-foreground"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  className="text-success shrink-0 mt-0.5"
-                >
-                  <path
-                    d="M3.5 9.5l3.5 3.5 7.5-7.5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+          <ul className="mt-6 space-y-3">
+            {FEATURES.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-success mt-0.5 flex-shrink-0">
+                  <path d="M4 8.5l2.5 2.5L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                {feature}
+                <span>{f}</span>
               </li>
             ))}
           </ul>
 
-          <button
-            onClick={handleOrder}
-            className="mt-8 w-full rounded-lg bg-accent px-4 py-3.5 text-center text-sm font-semibold text-white transition-colors hover:bg-accent-dark focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            Commander mon rapport
-          </button>
-
-          {stripeKey && (
-            <p className="mt-3 text-center text-xs text-muted flex items-center justify-center gap-1.5">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
+          {/* Formulaire */}
+          {status === 'success' ? (
+            <div className="mt-6 bg-success/10 border border-success/20 rounded-lg p-4 text-center">
+              {searchParams.get('session_id') ? (
+                <>
+                  <p className="text-sm font-semibold text-success">Paiement confirmé !</p>
+                  <p className="text-xs text-muted mt-1">
+                    Votre rapport fiscal personnalisé arrive par email sous 24h.
+                    Vérifiez vos spams si nécessaire.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-success">Pré-commande enregistrée !</p>
+                  <p className="text-xs text-muted mt-1">
+                    Nous vous contacterons dès que le service sera disponible.
+                  </p>
+                </>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="votre@email.fr"
+                required
+                className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground
+                           focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-sm
+                           hover:bg-primary-dark transition-colors disabled:opacity-50
+                           flex items-center justify-center gap-2"
               >
-                <rect x="2" y="6" width="10" height="6" rx="1.5" />
-                <path d="M4.5 6V4a2.5 2.5 0 015 0v2" />
-              </svg>
-              Paiement sécurisé par Stripe
-            </p>
+                {status === 'loading' ? (
+                  <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>Traitement...</>
+                ) : hasStripe ? 'Commander mon rapport' : 'Pré-commander (bientôt disponible)'}
+              </button>
+              {status === 'error' && (
+                <p className="text-xs text-danger text-center">Une erreur est survenue. Réessayez.</p>
+              )}
+            </form>
+          )}
+
+          {hasStripe && (
+            <p className="mt-3 text-xs text-muted text-center">Paiement sécurisé par Stripe</p>
           )}
         </div>
 
-        {/* Trust elements */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6">
-          {TRUST.map((item) => (
-            <div
-              key={item.text}
-              className="flex items-center gap-2 text-sm text-muted"
-            >
-              <span className="text-primary">{item.icon}</span>
-              {item.text}
-            </div>
-          ))}
-        </div>
+        {/* Trust + FAQ */}
+        <div className="space-y-6">
+          {/* Trust elements */}
+          <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
+            <h3 className="font-semibold text-foreground">Garanties</h3>
+            {[
+              { icon: '🔒', text: 'Données confidentielles — rien n\'est partagé' },
+              { icon: '↩️', text: 'Satisfait ou remboursé sous 30 jours' },
+              { icon: '📧', text: 'Support par email en moins de 24h' },
+            ].map((t) => (
+              <div key={t.text} className="flex items-center gap-2 text-sm text-muted">
+                <span>{t.icon}</span>
+                <span>{t.text}</span>
+              </div>
+            ))}
+          </div>
 
-        {/* Free version link */}
-        <div className="mt-12 rounded-xl border border-border bg-background p-6 text-center">
-          <p className="text-sm text-muted">
-            Pas encore prêt ? Essayez d&apos;abord notre simulateur gratuit.
-          </p>
-          <Link
-            href="/simulateur"
-            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-dark transition-colors"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <path d="M10 2L4 8l6 6" />
-            </svg>
-            Accéder au simulateur gratuit
-          </Link>
+          {/* FAQ */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-foreground">Questions fréquentes</h3>
+            {FAQ.map((item) => (
+              <details key={item.q} className="group">
+                <summary className="cursor-pointer text-sm font-medium text-foreground list-none flex items-center gap-1">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2"
+                    className="transition-transform group-open:rotate-90 text-muted flex-shrink-0">
+                    <path d="M5 3l4 4-4 4" />
+                  </svg>
+                  {item.q}
+                </summary>
+                <p className="mt-2 pl-5 text-xs text-muted leading-relaxed">{item.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </div>
-    </section>
+
+      {/* Link back */}
+      <div className="mt-12 text-center">
+        <Link href="/simulateur" className="text-sm text-primary hover:text-primary-dark transition-colors">
+          ← Retour au simulateur gratuit
+        </Link>
+      </div>
+    </div>
   );
 }

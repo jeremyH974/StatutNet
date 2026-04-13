@@ -7,10 +7,11 @@ export function Footer() {
             <span className="font-semibold text-foreground">StatutNet</span>
             {' '}— Simulateur fiscal pour indépendants
           </div>
-          <div className="flex gap-6">
-            <a href="/mentions-legales" className="hover:text-foreground transition-colors">
-              Mentions légales
-            </a>
+          <div className="flex flex-wrap gap-4 sm:gap-6">
+            <a href="/a-propos" className="hover:text-foreground transition-colors">À propos</a>
+            <a href="/comment-ca-marche" className="hover:text-foreground transition-colors">Comment ça marche</a>
+            <a href="/blog" className="hover:text-foreground transition-colors">Blog</a>
+            <a href="/mentions-legales" className="hover:text-foreground transition-colors">Mentions légales</a>
           </div>
         </div>
         <p className="text-xs text-muted mt-4 text-center md:text-left">

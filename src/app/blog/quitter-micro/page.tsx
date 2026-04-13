@@ -61,6 +61,12 @@ export default function QuitterMicroPage() {
             préparer la transition.
           </p>
 
+          <p className="mt-2">
+            <Link href="/simulateur?ca=75000&act=bnc" className="inline-flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors">
+              Simule à 75 000 € →
+            </Link>
+          </p>
+
           {/* Signal 2 */}
           <h2 className="text-2xl font-bold text-foreground pt-4">
             Signal 2 : Vos charges réelles dépassent l&apos;abattement forfaitaire
@@ -117,6 +123,12 @@ export default function QuitterMicroPage() {
             lorsque le bénéfice de la société est élevé. L&apos;EURL à l&apos;IS offre
             également cette possibilité, mais attention : les dividendes dépassant 10&nbsp;%
             du capital social sont soumis aux cotisations sociales TNS.
+          </p>
+
+          <p className="mt-2">
+            <Link href="/simulateur?ca=90000&act=bnc&ch=10000" className="inline-flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors">
+              Compare micro vs EURL à 90 000 € →
+            </Link>
           </p>
 
           {/* Signal 5 */}

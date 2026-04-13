@@ -223,9 +223,19 @@ export default function DiagnosticPage() {
               <ScoreBar label="SASU à l'IS" score={scores.sasu} maxScore={maxScore} />
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            {/* Phrase contextuelle */}
+            <p className="mt-6 text-sm text-primary-dark bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+              Avec un CA estimé à{' '}
+              <strong>{answers[0] === 0 ? '25 000' : answers[0] === 1 ? '60 000' : '120 000'} €</strong>,
+              voici ce que ça donnerait concrètement avec le statut{' '}
+              <strong>{STATUS_INFO[recommendation].label}</strong>.
+            </p>
+
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
               <Link
-                href="/simulateur"
+                href={`/simulateur?ca=${answers[0] === 0 ? 25000 : answers[0] === 1 ? 60000 : 120000}&act=bnc${
+                  answers[1] === 2 ? '&ch=15000' : answers[1] === 1 ? '&ch=8000' : ''
+                }${recommendation === 'sasu' ? '&rs=60' : recommendation === 'eurl' ? '&re=60' : ''}`}
                 className="flex-1 rounded-lg bg-primary px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:opacity-90"
               >
                 Simuler avec vos chiffres

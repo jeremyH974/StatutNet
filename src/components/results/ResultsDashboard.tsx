@@ -9,6 +9,7 @@ import { WaterfallChart } from './WaterfallChart';
 import { SocialCoverageTable } from './SocialCoverageTable';
 import { OptimiserPanel } from './OptimiserPanel';
 import { MultiYearChart } from './MultiYearChart';
+import { ResultSummary } from './ResultSummary';
 import { trackEvent } from '@/lib/analytics';
 
 function ShareButton() {
@@ -114,6 +115,9 @@ export function ResultsDashboard({ results }: ResultsDashboardProps) {
           <PDFExportButton />
         </div>
       </motion.div>
+
+      {/* Phrase de synthèse contextualisée */}
+      <ResultSummary results={results} />
 
       <ComparisonTable statuses={statuses} bestStatus={bestStatus.status} />
 

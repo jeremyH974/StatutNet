@@ -124,6 +124,12 @@ export default function MicroVsSasuPage() {
             ou un besoin de couverture sociale solide.
           </p>
 
+          <p className="mt-2">
+            <Link href="/simulateur" className="inline-flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors">
+              Compare avec ton CA réel →
+            </Link>
+          </p>
+
           {/* --- Comparaison chiffrée --- */}
           <h2 className="text-2xl font-bold text-foreground pt-4">
             Comparaison chiffrée : 60&nbsp;000&nbsp;euros de CA
@@ -189,6 +195,12 @@ export default function MicroVsSasuPage() {
             net, surtout lorsque les charges réelles sont faibles. La SASU devient intéressante
             au-delà de 70&nbsp;000 &ndash; 80&nbsp;000&nbsp;euros de CA ou lorsque les charges
             déductibles sont importantes.
+          </p>
+
+          <p className="mt-2">
+            <Link href="/simulateur?ca=60000&act=bnc" className="inline-flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors">
+              Simule ta situation à 60 000 € →
+            </Link>
           </p>
 
           {/* --- Comment choisir ? --- */}

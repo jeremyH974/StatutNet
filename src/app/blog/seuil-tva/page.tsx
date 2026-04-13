@@ -83,6 +83,12 @@ export default function SeuilTvaPage() {
             le plafond absolu : si vous le dépassez en cours d&apos;année, vous devez
             facturer la TVA dès le premier jour du mois de dépassement.
           </p>
+
+          <p className="mt-2">
+            <Link href="/simulateur?ca=45000&act=bnc" className="inline-flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors">
+              Calcule ton résultat pour 45 000 € de CA →
+            </Link>
+          </p>
           <p>
             Entre les deux seuils, la règle est la suivante : si votre CA dépasse le seuil
             de base mais reste sous le seuil majoré, vous conservez la franchise pour
@@ -204,6 +210,12 @@ export default function SeuilTvaPage() {
               de réfléchir à la création d&apos;une EURL ou d&apos;une SASU.
             </li>
           </ul>
+
+          <p className="mt-2">
+            <Link href="/simulateur?ca=80000&act=bic-s" className="inline-flex items-center gap-1 text-primary font-medium hover:text-primary-dark transition-colors">
+              Simule à 80 000 € pour voir l&apos;impact →
+            </Link>
+          </p>
 
           {/* CTA */}
           <div className="mt-10 bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">
