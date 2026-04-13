@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --src-dir --eslint --use-npm --no-turbopack --import-alias \"@/*\")",
+      "Bash(cp -r /c/Users/jerem/statutnet/* /c/Users/jerem/StatutNet/)",
+      "Bash(cp -r /c/Users/jerem/statutnet/.* /c/Users/jerem/StatutNet/)",
+      "Bash(npm install:*)",
+      "Bash(npx next:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx vitest:*)"
+    ]
+  }
+}
