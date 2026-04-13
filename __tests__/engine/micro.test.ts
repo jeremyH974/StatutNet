@@ -11,6 +11,8 @@ const baseInputs: SimulationInputs = {
   withVersementLiberatoire: false,
   remunerationPctEURL: 70,
   remunerationPctSASU: 70,
+  dividendeTaxMode: 'pfu',
+  capitalSocialEURL: 1_000,
 };
 
 describe('computeMicro', () => {

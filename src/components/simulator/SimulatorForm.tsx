@@ -153,6 +153,48 @@ export function SimulatorForm({ inputs, updateInput, onSubmit }: SimulatorFormPr
             </div>
           </label>
 
+          {/* Imposition des dividendes */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">Imposition des dividendes</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => updateInput('dividendeTaxMode', 'pfu')}
+                className={`px-3 py-2.5 rounded-lg border text-left text-sm transition-all ${
+                  inputs.dividendeTaxMode === 'pfu'
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/40'
+                }`}
+              >
+                <span className="block font-semibold">Flat tax 30%</span>
+                <span className="block text-xs text-muted">PFU (défaut)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateInput('dividendeTaxMode', 'bareme')}
+                className={`px-3 py-2.5 rounded-lg border text-left text-sm transition-all ${
+                  inputs.dividendeTaxMode === 'bareme'
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/40'
+                }`}
+              >
+                <span className="block font-semibold">Barème IR</span>
+                <span className="block text-xs text-muted">Abattement 40%</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Capital social EURL */}
+          <NumberInput
+            label="Capital social EURL"
+            value={inputs.capitalSocialEURL}
+            onChange={(v) => updateInput('capitalSocialEURL', v)}
+            min={0}
+            step={100}
+            suffix="€"
+            helpText="Dividendes > 10% du capital soumis aux cotisations TNS"
+          />
+
           {/* Sliders rémunération/dividendes */}
           <Slider
             label="Rémunération vs Dividendes (EURL)"

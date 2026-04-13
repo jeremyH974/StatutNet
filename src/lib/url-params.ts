@@ -1,4 +1,4 @@
-import type { SimulationInputs, ActivityType } from '@/engine/types';
+import type { SimulationInputs, ActivityType, DividendeTaxMode } from '@/engine/types';
 
 const DEFAULTS: SimulationInputs = {
   chiffreAffaires: 80_000,
@@ -9,6 +9,8 @@ const DEFAULTS: SimulationInputs = {
   withVersementLiberatoire: false,
   remunerationPctEURL: 70,
   remunerationPctSASU: 70,
+  dividendeTaxMode: 'pfu',
+  capitalSocialEURL: 1_000,
 };
 
 const ACT_TO_SHORT: Record<ActivityType, string> = {
@@ -49,6 +51,12 @@ export function encodeSimulationToURL(inputs: SimulationInputs): string {
   }
   if (inputs.remunerationPctSASU !== DEFAULTS.remunerationPctSASU) {
     params.set('rs', String(inputs.remunerationPctSASU));
+  }
+  if (inputs.dividendeTaxMode !== DEFAULTS.dividendeTaxMode) {
+    params.set('dt', inputs.dividendeTaxMode);
+  }
+  if (inputs.capitalSocialEURL !== DEFAULTS.capitalSocialEURL) {
+    params.set('cs', String(inputs.capitalSocialEURL));
   }
 
   return params.toString();
@@ -94,6 +102,16 @@ export function decodeSimulationFromURL(search: string): Partial<SimulationInput
   const rs = Number(params.get('rs'));
   if (params.has('rs') && !isNaN(rs) && rs >= 0 && rs <= 100) {
     result.remunerationPctSASU = rs;
+  }
+
+  const dt = params.get('dt');
+  if (dt === 'pfu' || dt === 'bareme') {
+    result.dividendeTaxMode = dt as DividendeTaxMode;
+  }
+
+  const cs = Number(params.get('cs'));
+  if (params.has('cs') && !isNaN(cs) && cs >= 0) {
+    result.capitalSocialEURL = cs;
   }
 
   return result;

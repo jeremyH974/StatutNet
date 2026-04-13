@@ -15,6 +15,21 @@
   --danger: #ef4444;
 }
 
+.dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
+  --primary: #2dd4bf;
+  --primary-dark: #14b8a6;
+  --primary-light: #115e59;
+  --accent: #f59e0b;
+  --accent-dark: #fbbf24;
+  --surface: #1e293b;
+  --muted: #94a3b8;
+  --border: #334155;
+  --success: #34d399;
+  --danger: #f87171;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -38,29 +53,16 @@ body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
 }
 
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--background);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* Number input: hide spinners */
 input[type='number']::-webkit-inner-spin-button,
-input[type='number']::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type='number'] {
-  -moz-appearance: textfield;
-}
+input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; }
+
+/* PDF export mode — masquer les éléments interactifs */
+.pdf-export-mode .pdf-hide { display: none !important; }
+.pdf-export-mode { background: #ffffff !important; color: #0f172a !important; }

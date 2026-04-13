@@ -14,6 +14,8 @@ const baseInputs: SimulationInputs = {
   withVersementLiberatoire: false,
   remunerationPctEURL: 50,
   remunerationPctSASU: 50,
+  dividendeTaxMode: 'pfu',
+  capitalSocialEURL: 1_000,
 };
 
 describe('findOptimalSplitEURL', () => {

@@ -40,6 +40,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        {process.env.NODE_ENV === 'production' && (
+          <script defer data-domain="statut-net.vercel.app" src="https://plausible.io/js/script.js" />
+        )}
+      </head>
       <body className="min-h-full flex flex-col">
         <Header />
         <main className="flex-1">{children}</main>

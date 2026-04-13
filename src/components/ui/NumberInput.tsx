@@ -38,7 +38,7 @@ export function NumberInput({
           onChange={(e) => onChange(Number(e.target.value))}
           min={min}
           max={max}
-          step={step}
+          step="any"
           className="w-full px-3 py-2.5 border border-border rounded-lg bg-surface text-foreground
                      focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
                      transition-all text-right pr-12"

@@ -14,6 +14,8 @@ const defaultInputs: SimulationInputs = {
   withVersementLiberatoire: false,
   remunerationPctEURL: 70,
   remunerationPctSASU: 70,
+  dividendeTaxMode: 'pfu',
+  capitalSocialEURL: 1_000,
 };
 
 export function useSimulator() {
@@ -22,7 +24,6 @@ export function useSimulator() {
   const [hasSimulated, setHasSimulated] = useState(false);
   const initializedFromURL = useRef(false);
 
-  // On mount: read URL params and initialize
   useEffect(() => {
     if (initializedFromURL.current) return;
     initializedFromURL.current = true;
@@ -36,13 +37,11 @@ export function useSimulator() {
     const merged = { ...defaultInputs, ...fromURL };
     setInputs(merged);
 
-    // Auto-run simulation when loaded from URL
     const r = computeAll(merged);
     setResults(r);
     setHasSimulated(true);
   }, []);
 
-  // Sync inputs to URL on every change
   useEffect(() => {
     if (!initializedFromURL.current) return;
 
@@ -72,13 +71,5 @@ export function useSimulator() {
     setHasSimulated(false);
   }, []);
 
-  return {
-    inputs,
-    setInputs,
-    updateInput,
-    results,
-    hasSimulated,
-    runSimulation,
-    resetInputs,
-  };
+  return { inputs, setInputs, updateInput, results, hasSimulated, runSimulation, resetInputs };
 }

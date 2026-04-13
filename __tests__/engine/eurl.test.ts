@@ -11,6 +11,8 @@ const baseInputs: SimulationInputs = {
   withVersementLiberatoire: false,
   remunerationPctEURL: 70,
   remunerationPctSASU: 70,
+  dividendeTaxMode: 'pfu',
+  capitalSocialEURL: 1_000,
 };
 
 describe('computeEURL', () => {
@@ -37,8 +39,10 @@ describe('computeEURL', () => {
 
   it('has no remuneration at 0%', () => {
     const r = computeEURL({ ...baseInputs, remunerationPctEURL: 0 });
-    expect(r.cotisationsSociales).toBe(0);
+    // Avec capital social 1000€, les dividendes > 10% capital génèrent des cotisations TNS
     expect(r.dividendesBruts).toBeGreaterThan(0);
+    // Les cotisations viennent uniquement des dividendes excédentaires
+    expect(r.cotisationsDetail.cotisationsDividendes).toBeGreaterThan(0);
   });
 
   it('returns empty result when CA <= charges', () => {

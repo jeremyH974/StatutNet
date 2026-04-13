@@ -1,5 +1,7 @@
 export type ActivityType = 'BNC' | 'BIC_SERVICES' | 'BIC_VENTE';
 
+export type DividendeTaxMode = 'pfu' | 'bareme';
+
 export interface SimulationInputs {
   chiffreAffaires: number;
   activityType: ActivityType;
@@ -9,6 +11,8 @@ export interface SimulationInputs {
   withVersementLiberatoire: boolean;
   remunerationPctEURL: number;
   remunerationPctSASU: number;
+  dividendeTaxMode: DividendeTaxMode;
+  capitalSocialEURL: number;
 }
 
 export interface CotisationsDetail {
@@ -20,6 +24,7 @@ export interface CotisationsDetail {
   csgCrds: number;
   formationPro: number;
   indemniteJournalieres?: number;
+  cotisationsDividendes?: number;
   total: number;
 }
 

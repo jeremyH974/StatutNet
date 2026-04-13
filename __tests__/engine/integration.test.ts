@@ -14,6 +14,8 @@ describe('Integration: computeAll', () => {
       withVersementLiberatoire: false,
       remunerationPctEURL: 70,
       remunerationPctSASU: 70,
+      dividendeTaxMode: 'pfu',
+      capitalSocialEURL: 1_000,
     };
     const r = computeAll(inputs);
 
@@ -29,8 +31,9 @@ describe('Integration: computeAll', () => {
     // (micro is often best for lower CA in BNC)
     expect(r.micro.revenuNetApresIR).toBeGreaterThan(40_000);
 
-    // SASU should have highest charges due to social charges
-    expect(r.sasu.tauxChargesEffectif).toBeGreaterThan(r.eurl.tauxChargesEffectif);
+    // Les deux statuts en société ont des charges élevées
+    expect(r.sasu.tauxChargesEffectif).toBeGreaterThan(0.40);
+    expect(r.eurl.tauxChargesEffectif).toBeGreaterThan(0.40);
   });
 
   // Scenario 2: E-commerce, 150k CA BIC vente, 2 parts, 30k charges
@@ -44,6 +47,8 @@ describe('Integration: computeAll', () => {
       withVersementLiberatoire: false,
       remunerationPctEURL: 60,
       remunerationPctSASU: 60,
+      dividendeTaxMode: 'pfu',
+      capitalSocialEURL: 1_000,
     };
     const r = computeAll(inputs);
 
@@ -70,6 +75,8 @@ describe('Integration: computeAll', () => {
       withVersementLiberatoire: false,
       remunerationPctEURL: 80,
       remunerationPctSASU: 80,
+      dividendeTaxMode: 'pfu',
+      capitalSocialEURL: 1_000,
     };
     const r = computeAll(inputs);
 
@@ -93,6 +100,8 @@ describe('Integration: computeAll', () => {
       withVersementLiberatoire: false,
       remunerationPctEURL: 100,
       remunerationPctSASU: 100,
+      dividendeTaxMode: 'pfu',
+      capitalSocialEURL: 1_000,
     };
     const r = computeAll(inputs);
 
@@ -112,6 +121,8 @@ describe('Integration: computeAll', () => {
       withVersementLiberatoire: false,
       remunerationPctEURL: 50,
       remunerationPctSASU: 50,
+      dividendeTaxMode: 'pfu',
+      capitalSocialEURL: 1_000,
     };
     const r = computeAll(inputs);
 

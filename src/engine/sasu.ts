@@ -1,46 +1,46 @@
 import type { SimulationInputs, StatusResult, CotisationsDetail, SocialCoverage } from './types';
-import { SASU_TAUX_PATRONAL, SASU_TAUX_SALARIAL, FLAT_TAX } from './constants';
+import { SASU_TAUX_PATRONAL, SASU_TAUX_SALARIAL, FLAT_TAX, PRELEVEMENTS_SOCIAUX_CAPITAL } from './constants';
 import { calculerIR, calculerIS, calculerAbattement10 } from './ir';
 
 export function computeSASU(inputs: SimulationInputs): StatusResult {
-  const { chiffreAffaires: ca, partsFiscales, chargesReelles, remunerationPctSASU } = inputs;
+  const { chiffreAffaires: ca, partsFiscales, chargesReelles, remunerationPctSASU, dividendeTaxMode } = inputs;
 
   const resultatAvantRemuneration = ca - chargesReelles;
   if (resultatAvantRemuneration <= 0) {
     return createEmptyResult(ca, chargesReelles);
   }
 
-  // Rémunération nette souhaitée (pct du résultat disponible)
   const enveloppeRemuneration = resultatAvantRemuneration * (remunerationPctSASU / 100);
-
-  // Du net vers le coût total :
-  // Brut = Net / (1 - taux salarial)
-  // Coût total = Brut * (1 + taux patronal)
   const salaireBrut = enveloppeRemuneration / (1 + SASU_TAUX_PATRONAL);
   const chargesPatronales = Math.round(salaireBrut * SASU_TAUX_PATRONAL);
   const chargesSalariales = Math.round(salaireBrut * SASU_TAUX_SALARIAL);
   const salaireNet = Math.round(salaireBrut - chargesSalariales);
   const coutTotalRemuneration = Math.round(salaireBrut + chargesPatronales);
-
   const cotisationsSociales = chargesPatronales + chargesSalariales;
 
-  // Résultat fiscal de la société
   const resultatFiscal = Math.max(0, resultatAvantRemuneration - coutTotalRemuneration);
-
-  // IS
   const is = calculerIS(resultatFiscal);
-
-  // Dividendes
   const dividendesBruts = Math.max(0, resultatFiscal - is);
-  const prelevementsDividendes = Math.round(dividendesBruts * FLAT_TAX);
+
+  // Prélèvements dividendes selon mode
+  let prelevementsDividendes: number;
+  let dividendesImposablesIR = 0;
+
+  if (dividendeTaxMode === 'bareme') {
+    const prelevementsSociaux = Math.round(dividendesBruts * PRELEVEMENTS_SOCIAUX_CAPITAL);
+    prelevementsDividendes = prelevementsSociaux;
+    dividendesImposablesIR = Math.round(dividendesBruts * 0.60); // abattement 40%
+  } else {
+    prelevementsDividendes = Math.round(dividendesBruts * FLAT_TAX);
+  }
   const dividendesNets = dividendesBruts - prelevementsDividendes;
 
-  // IR sur le salaire (avec abattement 10%)
+  // IR
   const abattement10 = calculerAbattement10(salaireNet);
-  const revenuImposable = Math.max(0, salaireNet - abattement10);
+  const revenuImposableRemuneration = Math.max(0, salaireNet - abattement10);
+  const revenuImposable = revenuImposableRemuneration + dividendesImposablesIR;
   const impotRevenu = calculerIR(revenuImposable, partsFiscales);
 
-  // Revenu net total
   const revenuNetAvantIR = salaireNet + dividendesNets;
   const revenuNetApresIR = revenuNetAvantIR - impotRevenu;
   const tauxChargesEffectif = ca > 0
@@ -59,32 +59,21 @@ export function computeSASU(inputs: SimulationInputs): StatusResult {
     total: cotisationsSociales,
   };
 
-  const protectionSociale: SocialCoverage = {
-    retraite: 'bonne',
-    maladie: 'complete',
-    prevoyance: 'complete',
-    chomage: 'non',
-    description: 'Régime général (assimilé salarié). Retraite complète, IJ maladie, prévoyance. Pas de chômage sauf assurance privée.',
-  };
-
   return {
     status: 'sasu',
     label: 'SASU à l\'IS',
-    ca,
-    chargesReelles,
+    ca, chargesReelles,
     remunerationBrute: Math.round(salaireBrut),
-    cotisationsSociales,
-    cotisationsDetail,
+    cotisationsSociales, cotisationsDetail,
     baseImposableIR: revenuImposable,
-    impotRevenu,
-    impotSocietes: is,
-    dividendesBruts,
-    prelevementsDividendes,
-    dividendesNets,
-    revenuNetAvantIR,
-    revenuNetApresIR,
-    tauxChargesEffectif,
-    protectionSociale,
+    impotRevenu, impotSocietes: is,
+    dividendesBruts, prelevementsDividendes, dividendesNets,
+    revenuNetAvantIR, revenuNetApresIR, tauxChargesEffectif,
+    protectionSociale: {
+      retraite: 'bonne', maladie: 'complete', prevoyance: 'complete',
+      chomage: 'non',
+      description: 'Régime général (assimilé salarié). Retraite complète, IJ maladie, prévoyance. Pas de chômage sauf assurance privée.',
+    },
   };
 }
 

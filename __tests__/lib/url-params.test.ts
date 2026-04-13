@@ -11,6 +11,8 @@ const defaults: SimulationInputs = {
   withVersementLiberatoire: false,
   remunerationPctEURL: 70,
   remunerationPctSASU: 70,
+  dividendeTaxMode: 'pfu',
+  capitalSocialEURL: 1_000,
 };
 
 describe('encodeSimulationToURL + decodeSimulationFromURL', () => {
@@ -24,6 +26,8 @@ describe('encodeSimulationToURL + decodeSimulationFromURL', () => {
       withVersementLiberatoire: true,
       remunerationPctEURL: 40,
       remunerationPctSASU: 55,
+      dividendeTaxMode: 'bareme',
+      capitalSocialEURL: 5_000,
     };
 
     const encoded = encodeSimulationToURL(inputs);
