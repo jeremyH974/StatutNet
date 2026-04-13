@@ -21,7 +21,7 @@ async function sendPremiumEmail(email: string): Promise<void> {
       Accept: 'application/json',
     },
     body: JSON.stringify({
-      sender: { name: 'StatutNet', email: 'contact@lamargenewsletter.fr' },
+      sender: { name: 'StatutNet', email: 'jeremyhenry974@gmail.com' },
       to: [{ email }],
       subject: 'Votre rapport StatutNet — Téléchargement disponible',
       htmlContent: `
