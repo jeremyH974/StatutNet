@@ -5,6 +5,7 @@ import { ComparisonTable } from './ComparisonTable';
 import { ComparisonChart } from './ComparisonChart';
 import { WaterfallChart } from './WaterfallChart';
 import { SocialCoverageTable } from './SocialCoverageTable';
+import { OptimiserPanel } from './OptimiserPanel';
 
 interface ResultsDashboardProps {
   results: SimulationResults;
@@ -16,6 +17,9 @@ export function ResultsDashboard({ results }: ResultsDashboardProps) {
     a.revenuNetApresIR > b.revenuNetApresIR ? a : b
   );
 
+  const eurlInfeasible = results.eurl.revenuNetApresIR === 0;
+  const sasuInfeasible = results.sasu.revenuNetApresIR === 0;
+
   return (
     <div className="space-y-8">
       {/* Winner banner */}
@@ -26,6 +30,15 @@ export function ResultsDashboard({ results }: ResultsDashboardProps) {
 
       {/* Comparison cards */}
       <ComparisonTable statuses={statuses} bestStatus={bestStatus.status} />
+
+      {/* Optimizer */}
+      <OptimiserPanel
+        optimalEURL={results.optimalEURL}
+        optimalSASU={results.optimalSASU}
+        eurlInfeasible={eurlInfeasible}
+        sasuInfeasible={sasuInfeasible}
+        inputs={results.inputs}
+      />
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

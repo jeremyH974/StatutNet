@@ -53,9 +53,19 @@ export interface StatusResult {
   protectionSociale: SocialCoverage;
 }
 
+export interface OptimalSplit {
+  remunerationPct: number;
+  remunerationAmount: number;
+  dividendesAmount: number;
+  netDisponible: number;
+  gainVsDefault: number;
+}
+
 export interface SimulationResults {
   inputs: SimulationInputs;
   micro: StatusResult;
   eurl: StatusResult;
   sasu: StatusResult;
+  optimalEURL: OptimalSplit | null;
+  optimalSASU: OptimalSplit | null;
 }
